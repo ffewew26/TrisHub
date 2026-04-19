@@ -1,0 +1,89 @@
+-- Micky Hub v2 (Clean Source)
+
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui", game.CoreGui)
+
+-- MAIN FRAME
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 400, 0, 300)
+main.Position = UDim2.new(0.3, 0, 0.3, 0)
+main.BackgroundColor3 = Color3.fromRGB(25,25,25)
+
+-- TITLE
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,0,0,40)
+title.Text = "Micky Hub v2 🍌"
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundColor3 = Color3.fromRGB(40,40,40)
+
+-- TABS
+local tabFrame = Instance.new("Frame", main)
+tabFrame.Size = UDim2.new(0,100,1,-40)
+tabFrame.Position = UDim2.new(0,0,0,40)
+
+local content = Instance.new("Frame", main)
+content.Size = UDim2.new(1,-100,1,-40)
+content.Position = UDim2.new(0,100,0,40)
+
+-- FUNCTION CREATE BUTTON
+function createButton(parent, text, y, callback)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1,0,0,40)
+    btn.Position = UDim2.new(0,0,0,y)
+    btn.Text = text
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+-- STATES
+local autoFarm = false
+local autoQuest = false
+
+-- MAIN TAB
+local mainTab = Instance.new("Frame", content)
+mainTab.Size = UDim2.new(1,0,1,0)
+
+createButton(mainTab, "Toggle Auto Farm", 0, function()
+    autoFarm = not autoFarm
+    while autoFarm do
+        print("Farming...")
+        task.wait(1)
+    end
+end)
+
+createButton(mainTab, "Toggle Auto Quest", 50, function()
+    autoQuest = not autoQuest
+    while autoQuest do
+        print("Doing quest...")
+        task.wait(2)
+    end
+end)
+
+-- TELEPORT TAB
+local tpTab = Instance.new("Frame", content)
+tpTab.Size = UDim2.new(1,0,1,0)
+tpTab.Visible = false
+
+createButton(tpTab, "Teleport Jungle", 0, function()
+    player.Character.HumanoidRootPart.CFrame = CFrame.new(-1600, 35, 150)
+end)
+
+createButton(tpTab, "Teleport Desert", 50, function()
+    player.Character.HumanoidRootPart.CFrame = CFrame.new(900, 10, 4400)
+end)
+
+-- TAB BUTTONS
+createButton(tabFrame, "Main", 0, function()
+    mainTab.Visible = true
+    tpTab.Visible = false
+end)
+
+createButton(tabFrame, "Teleport", 50, function()
+    mainTab.Visible = false
+    tpTab.Visible = true
+end)
+
+-- CLOSE
+createButton(tabFrame, "Close", 200, function()
+    gui:Destroy()
+end)
