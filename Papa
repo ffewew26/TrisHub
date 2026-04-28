@@ -1,0 +1,187 @@
+repeat task.wait() until game:IsLoaded()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- GUI
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "TrisHub"
+
+-- MAIN
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 700, 0, 420)
+main.Position = UDim2.new(0.5,-350,0.5,-210)
+main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+main.BackgroundTransparency = 0.1
+main.Active = true
+main.Draggable = true
+Instance.new("UICorner", main)
+
+-- TOP BAR
+local top = Instance.new("Frame", main)
+top.Size = UDim2.new(1,0,0,40)
+top.BackgroundColor3 = Color3.fromRGB(15,15,15)
+
+local title = Instance.new("TextLabel", top)
+title.Size = UDim2.new(1,0,1,0)
+title.Text = "Tris Hub"
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 18
+
+-- SIDEBAR
+local side = Instance.new("Frame", main)
+side.Size = UDim2.new(0,160,1,-40)
+side.Position = UDim2.new(0,0,0,40)
+side.BackgroundColor3 = Color3.fromRGB(18,18,18)
+
+-- CONTENT
+local content = Instance.new("Frame", main)
+content.Size = UDim2.new(1,-160,1,-40)
+content.Position = UDim2.new(0,160,0,40)
+content.BackgroundColor3 = Color3.fromRGB(25,25,25)
+
+-- TAB SYSTEM
+local function CreateTab(name, posY)
+    local btn = Instance.new("TextButton", side)
+    btn.Size = UDim2.new(1,0,0,45)
+    btn.Position = UDim2.new(0,0,0,posY)
+    btn.Text = name
+    btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 15
+
+    local page = Instance.new("Frame", content)
+    page.Size = UDim2.new(1,0,1,0)
+    page.Visible = false
+
+    btn.MouseButton1Click:Connect(function()
+        for _,v in pairs(content:GetChildren()) do
+            v.Visible = false
+        end
+        page.Visible = true
+    end)
+
+    return page
+end
+
+-- TABS
+local statusTab = CreateTab("Status", 0)
+local farmTab = CreateTab("Farm Settings", 50)
+local mainTab = CreateTab("Main", 100)
+local questTab = CreateTab("Quests", 150)
+
+statusTab.Visible = true
+
+-- ===== CARD UI =====
+local function CreateCard(parent, text, y)
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(0,300,0,60)
+    frame.Position = UDim2.new(0,20,0,y)
+    frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    Instance.new("UICorner", frame)
+
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1,0,1,0)
+    label.Text = text
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.new(1,1,1)
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 16
+end
+
+-- ===== STATUS =====
+CreateCard(statusTab, "Level: Loading...", 20)
+CreateCard(statusTab, "Beli: Loading...", 90)
+CreateCard(statusTab, "Fragments: Loading...", 160)
+
+-- ===== FARM SETTINGS =====
+local method = "Level Farm"
+
+local drop = Instance.new("TextButton", farmTab)
+drop.Size = UDim2.new(0,250,0,40)
+drop.Position = UDim2.new(0,20,0,20)
+drop.Text = "Method: "..method
+drop.BackgroundColor3 = Color3.fromRGB(40,40,40)
+drop.TextColor3 = Color3.new(1,1,1)
+
+local list = Instance.new("Frame", farmTab)
+list.Size = UDim2.new(0,250,0,180)
+list.Position = UDim2.new(0,20,0,70)
+list.Visible = false
+list.BackgroundColor3 = Color3.fromRGB(30,30,30)
+
+local methods = {
+    "Level Farm",
+    "Farm Bones",
+    "Farm Katakuri",
+    "Farm Tyrant",
+    "Aura Farm"
+}
+
+for i,v in pairs(methods) do
+    local opt = Instance.new("TextButton", list)
+    opt.Size = UDim2.new(1,0,0,35)
+    opt.Position = UDim2.new(0,0,0,(i-1)*35)
+    opt.Text = v
+    opt.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    opt.TextColor3 = Color3.new(1,1,1)
+
+    opt.MouseButton1Click:Connect(function()
+        method = v
+        drop.Text = "Method: "..v
+        list.Visible = false
+    end)
+end
+
+drop.MouseButton1Click:Connect(function()
+    list.Visible = not list.Visible
+end)
+
+-- ===== MAIN TAB =====
+local function CreateToggle(parent, text, y)
+    local state = false
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(0,220,0,40)
+    btn.Position = UDim2.new(0,20,0,y)
+    btn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    btn.Text = text.." : OFF"
+    btn.TextColor3 = Color3.new(1,1,1)
+
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.Text = text.." : "..(state and "ON" or "OFF")
+    end)
+
+    return function() return state end
+end
+
+local AutoFarm = CreateToggle(mainTab, "Auto Farm", 20)
+local AutoMaterial = CreateToggle(mainTab, "Auto Material", 70)
+local AutoMastery = CreateToggle(mainTab, "Auto Mastery", 120)
+local AutoChest = CreateToggle(mainTab, "Auto Chest", 170)
+
+-- ===== QUEST TAB =====
+CreateToggle(questTab, "Auto Quest", 20)
+CreateToggle(questTab, "Auto Boss", 70)
+CreateToggle(questTab, "Auto Raid", 120)
+CreateToggle(questTab, "Auto Sea Event", 170)
+
+-- ===== UPDATE STATUS REALTIME =====
+RunService.RenderStepped:Connect(function()
+    -- bạn có thể update thông tin ở đây
+end)
+
+-- ===== TOGGLE UI =====
+local toggle = Instance.new("TextButton", gui)
+toggle.Size = UDim2.new(0,80,0,30)
+toggle.Position = UDim2.new(0,20,0,100)
+toggle.Text = "Tris"
+toggle.BackgroundColor3 = Color3.fromRGB(0,170,255)
+
+toggle.MouseButton1Click:Connect(function()
+    main.Visible = not main.Visible
+end)
