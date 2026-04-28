@@ -185,3 +185,167 @@ toggle.BackgroundColor3 = Color3.fromRGB(0,170,255)
 toggle.MouseButton1Click:Connect(function()
     main.Visible = not main.Visible
 end)
+-- SPEED
+local speedBox = Instance.new("TextBox", mainTab)
+speedBox.Size = UDim2.new(0,100,0,35)
+speedBox.Position = UDim2.new(0,260,0,20)
+speedBox.PlaceholderText = "Speed"
+
+speedBox.FocusLost:Connect(function()
+    local val = tonumber(speedBox.Text)
+    if val then
+        player.Character.Humanoid.WalkSpeed = val
+    end
+end)
+
+-- JUMP
+local jumpBox = Instance.new("TextBox", mainTab)
+jumpBox.Size = UDim2.new(0,100,0,35)
+jumpBox.Position = UDim2.new(0,260,0,70)
+jumpBox.PlaceholderText = "Jump"
+
+jumpBox.FocusLost:Connect(function()
+    local val = tonumber(jumpBox.Text)
+    if val then
+        player.Character.Humanoid.JumpPower = val
+    end
+end) local tpBox = Instance.new("TextBox", mainTab)
+tpBox.Size = UDim2.new(0,150,0,35)
+tpBox.Position = UDim2.new(0,260,0,120)
+tpBox.PlaceholderText = "Player Name"
+
+local tpBtn = Instance.new("TextButton", mainTab)
+tpBtn.Size = UDim2.new(0,100,0,35)
+tpBtn.Position = UDim2.new(0,420,0,120)
+tpBtn.Text = "Teleport
+local ESP = false
+
+local espBtn = Instance.new("TextButton", miscTab)
+espBtn.Size = UDim2.new(0,200,0,40)
+espBtn.Position = UDim2.new(0,20,0,120)
+espBtn.Text = "ESP : OFF"
+
+espBtn.MouseButton1Click:Connect(function()
+    ESP = not ESP
+    espBtn.Text = "ESP : "..(ESP and "ON" or "OFF")
+
+    for _,v in pairs(game.Players:GetPlayers()) do
+        if v ~= player and v.Character then
+            if ESP then
+                local hl = Instance.new("Highlight", v.Character)
+                hl.FillColor = Color3.new(1,0,0)
+            else
+                if v.Character:FindFirstChild("Highlight") then
+                    v.Character.Highlight:Destroy()
+                end
+            end
+        end
+    end
+end) local noclip = false
+
+local noclipBtn = Instance.new("TextButton", miscTab)
+noclipBtn.Size = UDim2.new(0,200,0,40)
+noclipBtn.Position = UDim2.new(0,20,0,170)
+noclipBtn.Text = "No Clip : OFF"
+
+noclipBtn.MouseButton1Click:Connect(function()
+    noclip = not noclip
+    noclipBtn.Text = "No Clip : "..(noclip and "ON" or "OFF")
+end)
+
+game:GetService("RunService").Stepped:Connect(function()
+    if noclip and player.Character then
+        for _,v in pairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
+            end
+        end
+    end
+end) local flying = false
+
+local flyBtn = Instance.new("TextButton", miscTab)
+flyBtn.Size = UDim2.new(0,200,0,40)
+flyBtn.Position = UDim2.new(0,20,0,220)
+flyBtn.Text = "Fly : OFF"
+
+flyBtn.MouseButton1Click:Connect(function()
+    flying = not flying
+    flyBtn.Text = "Fly : "..(flying and "ON" or "OFF")
+
+    if flying then
+        local bv = Instance.new("BodyVelocity", player.Character.HumanoidRootPart)
+        bv.MaxForce = Vector3.new(9e9,9e9,9e9)
+        bv.Velocity = Vector3.new(0,50,0)
+    else
+        if player.Character.HumanoidRootPart:FindFirstChild("BodyVelocity") then
+            player.Character.HumanoidRootPart.BodyVelocity:Destroy()
+        end
+    end
+
+end)
+local levelCard = CreateCard(statusTab, "Level: ...", 20)
+local beliCard = CreateCard(statusTab, "Beli: ...", 90)
+local fragCard = CreateCard(statusTab, "Fragments: ...", 160)
+
+RunService.RenderStepped:Connect(function()
+    if player:FindFirstChild("Data") then
+        local data = player.Data
+
+        levelCard.TextLabel.Text = "Level: "..data.Level.Value
+        beliCard.TextLabel.Text = "Beli: "..data.Beli.Value
+        fragCard.TextLabel.Text = "Fragments: "..data.Fragments.Value
+    end
+end)
+local function CreateBar(parent, text, y)
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(0,300,0,50)
+    frame.Position = UDim2.new(0,350,0,y)
+    frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    Instance.new("UICorner", frame)
+
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1,0,0,20)
+    label.Text = text
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.new(1,1,1)
+
+    local bar = Instance.new("Frame", frame)
+    bar.Size = UDim2.new(0,0,0,10)
+    bar.Position = UDim2.new(0,0,1,-15)
+    bar.BackgroundColor3 = Color3.fromRGB(0,170,255)
+
+    return bar, label
+end
+
+local xpBar = CreateBar(statusTab, "Level Progress", 20)
+
+RunService.RenderStepped:Connect(function()
+    if player:FindFirstChild("Data") then
+        local lvl = player.Data.Level.Value
+        xpBar.Size = UDim2.new((lvl % 100)/100,0,0,10)
+    end
+end) local HttpService = game:GetService("HttpService")
+
+local fileName = "tris_hub_save.json"
+
+local function Save(data)
+    writefile(fileName, HttpService:JSONEncode(data))
+end
+
+local function Load()
+    if isfile(fileName) then
+        return HttpService:JSONDecode(readfile(fileName))
+    end
+    return {}
+end
+
+local config = Load()
+
+-- ví dụ lưu AutoFarm
+config.AutoFarm = config.AutoFarm or false
+
+spawn(function()
+    while wait(5) do
+        Save(config)
+    end
+end)
