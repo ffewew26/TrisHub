@@ -1,0 +1,956 @@
+repeat wait() until game:IsLoaded()
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "TrisHub"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 420, 0, 500)
+main.Position = UDim2.new(0.5, -210, 0.5, -250)
+main.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+main.Parent = gui
+
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 14)
+
+local header = Instance.new("Frame", main)
+header.Size = UDim2.new(1, 0, 0, 50)
+header.BackgroundTransparency = 1
+
+local title = Instance.new("TextLabel", header)
+title.Text = "TrisHub"
+title.Size = UDim2.new(1, -50, 1, 0)
+title.Position = UDim2.new(0, 10, 0, 0)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Font = Enum.Font.GothamBold
+title.TextSize = 20
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.BackgroundTransparency = 1
+
+local toggleBtn = Instance.new("TextButton", header)
+toggleBtn.Size = UDim2.new(0, 40, 0, 40)
+toggleBtn.Position = UDim2.new(1, -45, 0, 5)
+toggleBtn.Text = "≡"
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 20
+toggleBtn.TextColor3 = Color3.fromRGB(200,200,255)
+toggleBtn.BackgroundTransparency = 1
+
+local scroll = Instance.new("ScrollingFrame", main)
+scroll.Position = UDim2.new(0, 0, 0, 50)
+scroll.Size = UDim2.new(1, 0, 1, -50)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 800)
+scroll.ScrollBarThickness = 3
+scroll.BackgroundTransparency = 1
+
+local layout = Instance.new("UIListLayout", scroll)
+layout.Padding = UDim.new(0, 10)
+
+local function CreateCard(t, d)
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, -20, 0, 70)
+    card.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+    card.Parent = scroll
+    
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 12)
+
+    local txt = Instance.new("TextLabel", card)
+    txt.Text = t
+    txt.Font = Enum.Font.GothamBold
+    txt.TextSize = 16
+    txt.TextColor3 = Color3.fromRGB(255,255,255)
+    txt.Position = UDim2.new(0, 15, 0, 10)
+    txt.Size = UDim2.new(1, -30, 0, 20)
+    txt.BackgroundTransparency = 1
+    txt.TextXAlignment = Enum.TextXAlignment.Left
+
+    local desc = Instance.new("TextLabel", card)
+    desc.Text = d
+    desc.Font = Enum.Font.Gotham
+    desc.TextSize = 13
+    desc.TextColor3 = Color3.fromRGB(180,180,200)
+    desc.Position = UDim2.new(0, 15, 0, 30)
+    desc.Size = UDim2.new(1, -30, 0, 20)
+    desc.BackgroundTransparency = 1
+    desc.TextXAlignment = Enum.TextXAlignment.Left
+
+    card.MouseEnter:Connect(function()
+        TweenService:Create(card, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(45,45,70)
+        }):Play()
+    end)
+
+    card.MouseLeave:Connect(function()
+        TweenService:Create(card, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(30,30,45)
+        }):Play()
+    end)
+end
+
+CreateCard("Auto Farm", "Farm mobs efficiently")
+CreateCard("Auto Quest", "Complete quests automatically")
+CreateCard("Auto Boss", "Smart boss fighting")
+CreateCard("Auto Raid", "Join and farm raids")
+CreateCard("Sea Events", "Handle sea activities")
+CreateCard("Teleport", "Fast travel system")
+CreateCard("Player", "Fly, speed, noclip")
+CreateCard("System", "Settings & config")
+
+local dragging, dragInput, dragStart, startPos
+
+main.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = main.Position
+    end
+end)
+
+main.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        main.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+toggleBtn.MouseButton1Click:Connect(function()
+    main.Visible = not main.Visible
+end)
+local RunService = game:GetService("RunService")
+
+local Core = {}
+Core.Functions = {}
+Core.Loops = {}
+Core.Enabled = {}
+
+function Core:CreateLoop(name, func, delay)
+    Core.Enabled[name] = false
+
+    Core.Loops[name] = function()
+        task.spawn(function()
+            while Core.Enabled[name] do
+                local success, err = pcall(func)
+                if not success then
+                    warn("Error in "..name..": "..err)
+                end
+                task.wait(delay or 0.2)
+            end
+        end)
+    end
+end
+
+function Core:Start(name)
+    if Core.Loops[name] then
+        Core.Enabled[name] = true
+        Core.Loops[name]()
+    end
+end
+
+function Core:Stop(name)
+    Core.Enabled[name] = false
+end
+
+getgenv().TrisCore = Core
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+
+local function GetCharacter()
+    return player.Character or player.CharacterAdded:Wait()
+end
+
+local function GetRoot()
+    local char = GetCharacter()
+    return char:WaitForChild("HumanoidRootPart")
+end
+
+local function GetNearestMob()
+    local nearest = nil
+    local dist = math.huge
+
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") then
+            if v.Humanoid.Health > 0 and v ~= player.Character then
+                local d = (v.HumanoidRootPart.Position - GetRoot().Position).Magnitude
+                if d < dist then
+                    dist = d
+                    nearest = v
+                end
+            end
+        end
+    end
+
+    return nearest
+end
+
+local function TweenTo(pos)
+    local root = GetRoot()
+    local dist = (root.Position - pos).Magnitude
+
+    local tween = TweenService:Create(root, TweenInfo.new(dist/200, Enum.EasingStyle.Linear), {
+        CFrame = CFrame.new(pos)
+    })
+
+    tween:Play()
+    tween.Completed:Wait()
+end
+
+getgenv().TrisUtils = {
+    GetMob = GetNearestMob,
+    TweenTo = TweenTo
+}
+local player = game.Players.LocalPlayer
+
+local function GetHumanoid()
+    local char = player.Character or player.CharacterAdded:Wait()
+    return char:WaitForChild("Humanoid")
+end
+
+local function AttackTarget(target)
+    if not target then return end
+    
+    local humanoid = GetHumanoid()
+    
+    if humanoid and target:FindFirstChild("Humanoid") then
+        if target.Humanoid.Health > 0 then
+            humanoid:ChangeState(Enum.HumanoidStateType.Attacking)
+        end
+    end
+end
+
+local function FaceTarget(target)
+    if not target then return end
+    
+    local char = player.Character or player.CharacterAdded:Wait()
+    local root = char:FindFirstChild("HumanoidRootPart")
+    
+    if root and target:FindFirstChild("HumanoidRootPart") then
+        root.CFrame = CFrame.new(root.Position, target.HumanoidRootPart.Position)
+    end
+end
+
+getgenv().TrisCombat = {
+    Attack = AttackTarget,
+    Face = FaceTarget
+}
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+getgenv().TrisConfig = {
+    WalkSpeed = 16,
+    JumpPower = 50,
+    FlySpeed = 100
+}
+
+local function GetRoot()
+    local char = player.Character or player.CharacterAdded:Wait()
+    return char:WaitForChild("HumanoidRootPart")
+end
+
+local function SetWalkSpeed(v)
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hum = char:WaitForChild("Humanoid")
+    hum.WalkSpeed = v
+end
+
+local function SetJumpPower(v)
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hum = char:WaitForChild("Humanoid")
+    hum.JumpPower = v
+end
+
+local flying = false
+local bv
+
+local function FlyToggle(state)
+    flying = state
+    local root = GetRoot()
+
+    if flying then
+        bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(1,1,1)*99999
+        bv.Velocity = Vector3.zero
+        bv.Parent = root
+    else
+        if bv then
+            bv:Destroy()
+        end
+    end
+end
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if flying and bv then
+        local cam = workspace.CurrentCamera
+        bv.Velocity = cam.CFrame.LookVector * TrisConfig.FlySpeed
+    end
+end)
+
+local function TeleportTo(pos)
+    local root = GetRoot()
+    root.CFrame = CFrame.new(pos)
+end
+
+local HttpService = game:GetService("HttpService")
+
+local function SaveConfig()
+    if writefile then
+        writefile("trishub_config.json", HttpService:JSONEncode(TrisConfig))
+    end
+end
+
+local function LoadConfig()
+    if readfile and isfile and isfile("trishub_config.json") then
+        local data = HttpService:JSONDecode(readfile("trishub_config.json"))
+        for i,v in pairs(data) do
+            TrisConfig[i] = v
+        end
+    end
+end
+
+local statusGui = Instance.new("ScreenGui", player.PlayerGui)
+statusGui.Name = "TrisStatus"
+
+local status = Instance.new("TextLabel", statusGui)
+status.Size = UDim2.new(0,200,0,50)
+status.Position = UDim2.new(0,10,0,10)
+status.BackgroundColor3 = Color3.fromRGB(20,20,30)
+status.TextColor3 = Color3.fromRGB(255,255,255)
+status.Font = Enum.Font.GothamBold
+status.TextSize = 14
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    local char = player.Character
+    if char and char:FindFirstChild("Humanoid") then
+        status.Text = "HP: "..math.floor(char.Humanoid.Health)
+    end
+end)
+
+getgenv().TrisSystem = {
+    WalkSpeed = SetWalkSpeed,
+    JumpPower = SetJumpPower,
+    Fly = FlyToggle,
+    Teleport = TeleportTo,
+    Save = SaveConfig,
+    Load = LoadConfig
+}
+local player = game.Players.LocalPlayer
+local gui = player.PlayerGui:FindFirstChild("TrisHub")
+
+local main = gui and gui:FindFirstChildWhichIsA("Frame")
+if not main then return end
+
+local TweenService = game:GetService("TweenService")
+
+local tabFrame = Instance.new("Frame", main)
+tabFrame.Size = UDim2.new(1,0,0,40)
+tabFrame.Position = UDim2.new(0,0,0,50)
+tabFrame.BackgroundTransparency = 1
+
+local pages = {}
+
+local function CreateTab(name, pos)
+    local btn = Instance.new("TextButton", tabFrame)
+    btn.Size = UDim2.new(0,100,1,0)
+    btn.Position = UDim2.new(0,(pos-1)*105,0,0)
+    btn.Text = name
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.BackgroundColor3 = Color3.fromRGB(30,30,45)
+    btn.TextColor3 = Color3.new(1,1,1)
+
+    local page = Instance.new("Frame", main)
+    page.Size = UDim2.new(1,0,1,-90)
+    page.Position = UDim2.new(0,0,0,90)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+
+    pages[name] = page
+
+    btn.MouseButton1Click:Connect(function()
+        for _,p in pairs(pages) do
+            p.Visible = false
+        end
+        page.Visible = true
+    end)
+
+    return page
+end
+
+local farmPage = CreateTab("Farm",1)
+local playerPage = CreateTab("Player",2)
+local systemPage = CreateTab("System",3)
+
+pages["Farm"].Visible = true
+
+local function CreateToggle(parent, text, callback)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(0,200,0,40)
+    btn.BackgroundColor3 = Color3.fromRGB(30,30,45)
+    btn.Text = text.." [OFF]"
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+
+    local state = false
+
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.Text = text.." ["..(state and "ON" or "OFF").."]"
+        callback(state)
+    end)
+
+    return btn
+end
+
+local function CreateSlider(parent, text, min, max, callback)
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(0,200,0,50)
+    frame.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1,0,0,20)
+    label.Text = text..": "..min
+    label.TextColor3 = Color3.new(1,1,1)
+    label.BackgroundTransparency = 1
+
+    local slider = Instance.new("TextButton", frame)
+    slider.Size = UDim2.new(1,0,0,20)
+    slider.Position = UDim2.new(0,0,0,25)
+    slider.BackgroundColor3 = Color3.fromRGB(40,40,60)
+    slider.Text = ""
+
+    slider.MouseButton1Click:Connect(function()
+        local value = math.random(min,max)
+        label.Text = text..": "..value
+        callback(value)
+    end)
+
+    return frame
+end
+
+local y = 0
+
+CreateToggle(farmPage, "Test Loop", function(state)
+    local Core = getgenv().TrisCore
+    if state then
+        Core:CreateLoop("Test", function()
+            print("Running...")
+        end, 1)
+        Core:Start("Test")
+    else
+        Core:Stop("Test")
+    end
+end).Position = UDim2.new(0,10,0,y)
+
+y = y + 50
+
+CreateToggle(playerPage, "Fly", function(state)
+    TrisSystem.Fly(state)
+end).Position = UDim2.new(0,10,0,0)
+
+CreateSlider(playerPage, "Speed", 50, 200, function(val)
+    TrisSystem.WalkSpeed(val)
+end).Position = UDim2.new(0,10,0,60)
+
+CreateToggle(systemPage, "Save Config", function()
+    TrisSystem.Save()
+end).Position = UDim2.new(0,10,0,0)
+
+CreateToggle(systemPage, "Load Config", function()
+    TrisSystem.Load()
+end).Position = UDim2.new(0,10,0,50)
+local Core = getgenv().TrisCore
+local Utils = getgenv().TrisUtils
+local Combat = getgenv().TrisCombat
+
+local farming = false
+
+local function FarmLogic()
+    local mob = Utils.GetMob()
+    
+    if mob and mob:FindFirstChild("HumanoidRootPart") then
+        Utils.TweenTo(mob.HumanoidRootPart.Position)
+        Combat.Face(mob)
+        Combat.Attack(mob)
+    end
+end
+
+Core:CreateLoop("FarmAssist", function()
+    if farming then
+        FarmLogic()
+    end
+end, 0.3)
+
+local player = game.Players.LocalPlayer
+local gui = player.PlayerGui:FindFirstChild("TrisHub")
+
+local main = gui and gui:FindFirstChildWhichIsA("Frame")
+if not main then return end
+
+local farmPage = nil
+for _,v in pairs(main:GetChildren()) do
+    if v:IsA("Frame") and v.Visible then
+        farmPage = v
+    end
+end
+
+if not farmPage then return end
+
+local btn = Instance.new("TextButton", farmPage)
+btn.Size = UDim2.new(0,200,0,40)
+btn.Position = UDim2.new(0,10,0,120)
+btn.BackgroundColor3 = Color3.fromRGB(30,30,45)
+btn.TextColor3 = Color3.new(1,1,1)
+btn.Font = Enum.Font.GothamBold
+btn.TextSize = 14
+btn.Text = "Farm Assist [OFF]"
+
+btn.MouseButton1Click:Connect(function()
+    farming = not farming
+    btn.Text = "Farm Assist ["..(farming and "ON" or "OFF").."]"
+
+    if farming then
+        Core:Start("FarmAssist")
+    else
+        Core:Stop("FarmAssist")
+    end
+end)
+local Core = getgenv().TrisCore
+local Utils = getgenv().TrisUtils
+local Combat = getgenv().TrisCombat
+
+getgenv().FarmSettings = {
+    Mode = "Nearest",
+    Distance = 5
+}
+
+local function GetTarget()
+    if FarmSettings.Mode == "Selected" and getgenv().SelectedMob then
+        for _,v in pairs(workspace:GetDescendants()) do
+            if v:IsA("Model") and v.Name == getgenv().SelectedMob and v:FindFirstChild("Humanoid") then
+                if v.Humanoid.Health > 0 then
+                    return v
+                end
+            end
+        end
+    end
+    return Utils.GetMob()
+end
+
+local function SmartFarm()
+    local mob = GetTarget()
+    if not mob or not mob:FindFirstChild("HumanoidRootPart") then return end
+
+    local pos = mob.HumanoidRootPart.Position + Vector3.new(0,0,FarmSettings.Distance)
+
+    Utils.TweenTo(pos)
+    Combat.Face(mob)
+    Combat.Attack(mob)
+end
+
+Core:CreateLoop("SmartFarm", function()
+    SmartFarm()
+end, 0.3)
+
+-- UI thêm vào farm tab
+local player = game.Players.LocalPlayer
+local gui = player.PlayerGui:FindFirstChild("TrisHub")
+local main = gui and gui:FindFirstChildWhichIsA("Frame")
+
+if main then
+    local farmPage
+    for _,v in pairs(main:GetChildren()) do
+        if v:IsA("Frame") and v.Visible then
+            farmPage = v
+        end
+    end
+
+    if farmPage then
+        local modeBtn = Instance.new("TextButton", farmPage)
+        modeBtn.Size = UDim2.new(0,200,0,40)
+        modeBtn.Position = UDim2.new(0,10,0,220)
+        mode
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+
+local player = Players.LocalPlayer
+
+local function Notify(msg)
+    pcall(function()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "TrisHub",
+            Text = msg,
+            Duration = 3
+        })
+    end)
+end
+
+spawn(function()
+    while task.wait(5) do
+        for _,v in pairs(workspace:GetDescendants()) do
+            if v:IsA("Model") and v:FindFirstChild("Humanoid") then
+                if string.find(v.Name:lower(), "boss") and v.Humanoid.Health > 0 then
+                    Notify("Boss found: "..v.Name)
+                end
+            end
+        end
+    end
+end)
+
+local function FPSBoost()
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.Material = Enum.Material.SmoothPlastic
+            v.Reflectance = 0
+        end
+        if v:IsA("Decal") then
+            v.Transparency = 1
+        end
+    end
+end
+
+local function AutoRejoin()
+    player.OnTeleport:Connect(function(State)
+        if State == Enum.TeleportState.Failed then
+            TeleportService:Teleport(game.PlaceId)
+        end
+    end)
+end
+
+RunService.RenderStepped:Connect(function()
+    local char = player.Character
+    if char and char:FindFirstChild("Humanoid") then
+        if char.Humanoid.Health < 20 then
+            getgenv().TrisCore:Stop("FarmAssist")
+        end
+    end
+end)
+
+local gui = player.PlayerGui:FindFirstChild("TrisHub")
+local main = gui and gui:FindFirstChildWhichIsA("Frame")
+
+if main then
+    local systemPage
+    for _,v in pairs(main:GetChildren()) do
+        if v:IsA("Frame") and v.Visible then
+            systemPage = v
+        end
+    end
+
+    if systemPage then
+        local fpsBtn = Instance.new("TextButton", systemPage)
+        fpsBtn.Size = UDim2.new(0,200,0,40)
+        fpsBtn.Position = UDim2.new(0,10,0,200)
+        fpsBtn.Text = "FPS Boost"
+        fpsBtn.BackgroundColor3 = Color3.fromRGB(30,30,45)
+        fpsBtn.TextColor3 = Color3.new(1,1,1)
+
+        fpsBtn.MouseButton1Click:Connect(function()
+            FPSBoost()
+            Notify("FPS Boost Enabled")
+        end)
+
+        local rejoinBtn = Instance.new("TextButton", systemPage)
+        rejoinBtn.Size = UDim2.new(0,200,0,40)
+        rejoinBtn.Position = UDim2.new(0,10,0,250)
+        rejoinBtn.Text = "Auto Rejoin"
+        rejoinBtn.BackgroundColor3 = Color3.fromRGB(30,30,45)
+        rejoinBtn.TextColor3 = Color3.new(1,1,1)
+
+        rejoinBtn.MouseButton1Click:Connect(function()
+            AutoRejoin()
+            Notify("Auto Rejoin Enabled")
+        end)
+    end
+end
+local Core = getgenv().TrisCore
+local TrisSystem = getgenv().TrisSystem
+
+local autoChest = false
+local lastPos = nil
+
+local function GetNearestChest()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    local root = char:WaitForChild("HumanoidRootPart")
+
+    local nearest = nil
+    local dist = math.huge
+
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and string.find(v.Name:lower(), "chest") then
+            local hrp = v:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local d = (hrp.Position - root.Position).Magnitude
+                if d < dist then
+                    dist = d
+                    nearest = hrp
+                end
+            end
+        end
+    end
+
+    return nearest
+end
+
+local function ChestFarm()
+    local target = GetNearestChest()
+    if target then
+        if not lastPos or (lastPos - target.Position).Magnitude > 5 then
+            lastPos = target.Position
+            TrisSystem.Teleport(target.Position)
+        end
+    end
+end
+
+Core:CreateLoop("AutoChest", function()
+    if autoChest then
+        ChestFarm()
+    end
+end, 1.2)
+
+local player = game.Players.LocalPlayer
+local gui = player.PlayerGui:FindFirstChild("TrisHub")
+local main = gui and gui:FindFirstChildWhichIsA("Frame")
+
+if main then
+    local farmPage
+    for _,v in pairs(main:GetChildren()) do
+        if v:IsA("Frame") and v.Visible then
+            farmPage = v
+        end
+    end
+
+    if farmPage then
+        local btn = Instance.new("TextButton", farmPage)
+        btn.Size = UDim2.new(0,200,0,40)
+        btn.Position = UDim2.new(0,10,0,320)
+        btn.Text = "Auto Chest [OFF]"
+        btn.BackgroundColor3 = Color3.fromRGB(30,30,45)
+        btn.TextColor3 = Color3.new(1,1,1)
+
+        btn.MouseButton1Click:Connect(function()
+            autoChest = not autoChest
+            btn.Text = "Auto Chest ["..(autoChest and "ON" or "OFF").."]"
+
+            if autoChest then
+                Core:Start("AutoChest")
+            else
+                Core:Stop("AutoChest")
+            end
+        end)
+    end
+end
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local Core = getgenv().TrisCore
+local TrisSystem = getgenv().TrisSystem
+
+local autoHeal = false
+
+local function HealCheck()
+    local char = player.Character
+    if not char then return end
+
+    local hum = char:FindFirstChild("Humanoid")
+    if not hum then return end
+
+    if hum.Health < hum.MaxHealth * 0.4 then
+        hum:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end
+
+Core:CreateLoop("AutoHeal", function()
+    if autoHeal then
+        HealCheck()
+    end
+end, 0.5)
+
+local places = {
+    ["Starter"] = Vector3.new(0,10,0),
+    ["Jungle"] = Vector3.new(-1200,20,300),
+    ["Desert"] = Vector3.new(900,15,400),
+    ["Snow"] = Vector3.new(1200,50,-800)
+}
+
+local playerGui = player.PlayerGui:FindFirstChild("TrisHub")
+local main = playerGui and playerGui:FindFirstChildWhichIsA("Frame")
+
+if main then
+    local playerPage
+
+    for _,v in pairs(main:GetChildren()) do
+        if v:IsA("Frame") and v.Visible then
+            playerPage = v
+        end
+    end
+
+    if playerPage then
+        local healBtn = Instance.new("TextButton", playerPage)
+        healBtn.Size = UDim2.new(0,200,0,40)
+        healBtn.Position = UDim2.new(0,10,0,120)
+        healBtn.Text = "Auto Heal [OFF]"
+        healBtn.BackgroundColor3 = Color3.fromRGB(30,30,45)
+        healBtn.TextColor3 = Color3.new(1,1,1)
+
+        healBtn.MouseButton1Click:Connect(function()
+            autoHeal = not autoHeal
+            healBtn.Text = "Auto Heal ["..(autoHeal and "ON" or "OFF").."]"
+
+            if autoHeal then
+                Core:Start("AutoHeal")
+            else
+                Core:Stop("AutoHeal")
+            end
+        end)
+
+        local y = 180
+
+        for name,pos in pairs(places) do
+            local btn = Instance.new("TextButton", playerPage)
+            btn.Size = UDim2.new(0,200,0,35)
+            btn.Position = UDim2.new(0,10,0,y)
+            btn.Text = "TP "..name
+            btn.BackgroundColor3 = Color3.fromRGB(30,30,45)
+            btn.TextColor3 = Color3.new(1,1,1)
+
+            btn.MouseButton1Click:Connect(function()
+                TrisSystem.Teleport(pos)
+            end)
+
+            y = y + 40
+        end
+    end
+end local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local Core = getgenv().TrisCore
+
+local autoSkill = false
+local autoFruit = false
+
+local function UseSkills()
+    local char = player.Character
+    if not char then return end
+
+    for _,v in pairs(char:GetChildren()) do
+        if v:IsA("Tool") then
+            pcall(function()
+                v:Activate()
+            end)
+        end
+    end
+end
+
+Core:CreateLoop("AutoSkill", function()
+    if autoSkill then
+        UseSkills()
+    end
+end, 0.3)
+
+local function FindFruit()
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Tool") and string.find(v.Name:lower(), "fruit") then
+            return v
+        end
+    end
+end
+
+local function Notify(msg)
+    pcall(function()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "TrisHub",
+            Text = msg,
+            Duration = 4
+        })
+    end)
+end
+
+local found = {}
+
+Core:CreateLoop("FruitDetect", function()
+    if autoFruit then
+        local fruit = FindFruit()
+        if fruit and not found[fruit] then
+            found[fruit] = true
+            Notify("Fruit detected: "..fruit.Name)
+        end
+    end
+end, 2)
+
+local gui = player.PlayerGui:FindFirstChild("TrisHub")
+local main = gui and gui:FindFirstChildWhichIsA("Frame")
+
+if main then
+    local farmPage
+
+    for _,v in pairs(main:GetChildren()) do
+        if v:IsA("Frame") and v.Visible then
+            farmPage = v
+        end
+    end
+
+    if farmPage then
+        local skillBtn = Instance.new("TextButton", farmPage)
+        skillBtn.Size = UDim2.new(0,200,0,40)
+        skillBtn.Position = UDim2.new(0,10,0,380)
+        skillBtn.Text = "Auto Skill [OFF]"
+        skillBtn.BackgroundColor3 = Color3.fromRGB(30,30,45)
+        skillBtn.TextColor3 = Color3.new(1,1,1)
+
+        skillBtn.MouseButton1Click:Connect(function()
+            autoSkill = not autoSkill
+            skillBtn.Text = "Auto Skill ["..(autoSkill and "ON" or "OFF").."]"
+
+            if autoSkill then
+                Core:Start("AutoSkill")
+            else
+                Core:Stop("AutoSkill")
+            end
+        end)
+
+        local fruitBtn = Instance.new("TextButton", farmPage)
+        fruitBtn.Size = UDim2.new(0,200,0,40)
+        fruitBtn.Position = UDim2.new(0,10,0,430)
+        fruitBtn.Text = "Fruit Detect [OFF]"
+        fruitBtn.BackgroundColor3 = Color3.fromRGB(30,30,45)
+        fruitBtn.TextColor3 = Color3.new(1,1,1)
+
+        fruitBtn.MouseButton1Click:Connect(function()
+            autoFruit = not autoFruit
+            fruitBtn.Text = "Fruit Detect ["..(autoFruit and "ON" or "OFF").."]"
+
+            if autoFruit then
+                Core:Start("FruitDetect")
+            else
+                Core:Stop("FruitDetect")
+            end
+        end)
+    end
+end
