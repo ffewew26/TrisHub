@@ -96,7 +96,7 @@ function library:CreateWindow(text,maincolor,text2,logo)
     Top.ClipsDescendants = true
     
     local NameHub = Instance.new("TextLabel")
-    NameHub.Name = "NameHub"
+    NameHub.Name = "TrisHubPremium"
     NameHub.Parent = Top
     NameHub.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     NameHub.BackgroundTransparency = 1.000
